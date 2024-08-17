@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+
+  tg_bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.tg_bot
+    env_file:
+      - .env
+    volumes:
+      - .:/app
