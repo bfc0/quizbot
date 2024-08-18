@@ -1,5 +1,5 @@
+redis
 .venv
 .env
 __pycache__
 redis_data
-

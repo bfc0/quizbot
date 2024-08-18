@@ -1,0 +1,4 @@
+environs==11.0.0
+vkbottle==4.3.12
+vkbottle-types==5.131.146.16
+redis==5.0.8

@@ -1,14 +1,11 @@
 import os
 import re
+import json
+import redis
 import argparse
 
 
-def extract_qa_commentary(content):
-
-    # pattern = re.compile(
-    #     r"Вопрос\s*\d*:\s*(.*?)\nОтвет:\s*(.*?)\nКомментарий:\s*(.*?)(?:\nИсточник|\Z)",
-    #     re.DOTALL,
-    # )
+def extract_questions(content):
 
     pattern = re.compile(
         r"Вопрос\s*\d*:\s*(.*?)\nОтвет:\s*(.*?)(?:\nЗачет:\s*(.*?))?(?:\nКомментарий:\s*(.*?))?(?:\nИсточник|\Z)",
@@ -33,16 +30,24 @@ def main():
     parser.add_argument("directory", help="directory with questions")
     args = parser.parse_args()
 
+    r = redis.Redis(host="localhost", port=6379, db=0)
+
     for filename in os.listdir(args.directory):
         file_path = os.path.join(args.directory, filename)
         with open(file_path, "r", encoding="koi8-r") as file:
             content = file.read()
-            qas = extract_qa_commentary(content)
-            for qqq in qas:
-                q, a, secondary_a, commentary = qqq
-                print(f"{q=}\n{a=}\n{secondary_a}\n{commentary=}")
+            questions = extract_questions(content)
 
-        break
+            for item in questions:
+                extracted_question, primary_answer, secondary_answer, explanation = item
+                question = {
+                    "question": extracted_question,
+                    "primary_answer": primary_answer,
+                    "secondary_answer": secondary_answer,
+                    "explanation": explanation,
+                }
+                key = r.incr("question_id")
+                r.set(f"question:{key}", json.dumps(question))
 
 
 if __name__ == "__main__":
