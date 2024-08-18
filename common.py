@@ -15,6 +15,8 @@ def is_correct_answer_to(question: dict[str, str], answer: str) -> bool:
     primary = question.get("primary_answer")
     if not primary:  # something wrong with the question
         return False
+    primary = primary.lower()
+    answer = answer.lower()
 
     if answer == primary.split(".")[0]:
         return True
@@ -22,6 +24,7 @@ def is_correct_answer_to(question: dict[str, str], answer: str) -> bool:
     secondary = question.get("secondary_answer")
     if not secondary:
         return False
+    secondary = secondary.lower()
 
     if answer == secondary.split(".")[0]:
         return True
