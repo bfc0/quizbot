@@ -37,13 +37,13 @@ def main():
     for filename in os.listdir(args.directory)[:limit]:
         file_path = os.path.join(args.directory, filename)
         with open(file_path, "r", encoding="koi8-r") as file:
-            content = file.read().replace("\\n", "").replace("\n", "")
+            content = file.read()
             questions = extract_questions(content)
 
             for item in questions:
                 extracted_question, primary_answer, secondary_answer, explanation = item
                 question = {
-                    "question": extracted_question,
+                    "question": extracted_question.replace("\n", ""),
                     "primary_answer": primary_answer,
                     "secondary_answer": secondary_answer,
                     "explanation": explanation,
