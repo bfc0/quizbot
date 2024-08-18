@@ -7,7 +7,7 @@ from environs import Env
 import redis
 import logging
 
-from common import get_random_question
+from common import get_random_question, is_correct_answer_to
 
 
 class QuizStates(StatesGroup):
@@ -18,7 +18,7 @@ class QuizStates(StatesGroup):
 router = Router()
 
 
-def question_buttons():
+def create_buttons():
     buttons = [
         [
             types.KeyboardButton(text="Новый вопрос"),
@@ -31,7 +31,7 @@ def question_buttons():
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message, state: FSMContext) -> None:
-    await message.answer("Нажми на «Новый вопрос»", reply_markup=question_buttons())
+    await message.answer("Нажми на «Новый вопрос»", reply_markup=create_buttons())
     await state.set_state(QuizStates.idle)
 
 
@@ -64,21 +64,18 @@ async def answer_question(message: types.Message, state: FSMContext) -> None:
     data = await state.get_data()
     question = data["current_question"]
 
-    if message.text in (
-        question.get("primary_answer"),
-        question.get("secondary_answer"),
-    ):
-        await message.answer("Правильно", reply_markup=question_buttons())
+    if is_correct_answer_to(question, message.text):
+        await message.answer("Правильно", reply_markup=create_buttons())
         if explanation := question.get("explanation"):
             await message.answer(explanation)
         await state.set_state(QuizStates.idle)
     else:
-        await message.answer(f"Неправильно. Попробуй ещё", reply_markup=question_buttons())
+        await message.answer(f"Неправильно. Попробуй ещё", reply_markup=create_buttons())
 
 
 @router.message(QuizStates.idle)
 async def reply_to_random_message(message: types.Message, state: FSMContext) -> None:
-    await message.answer("Просто нажми кнопку", reply_markup=question_buttons())
+    await message.answer("Просто нажми кнопку", reply_markup=create_buttons())
 
 
 async def main():

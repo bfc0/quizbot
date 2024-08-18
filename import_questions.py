@@ -12,7 +12,7 @@ def extract_questions(content):
         re.DOTALL,
     )
     matches = pattern.findall(content)
-    qa_commentary_list = []
+    extracted_questions = []
 
     for match in matches:
 
@@ -20,22 +20,24 @@ def extract_questions(content):
         answer = match[1].strip()
         secondary_answer = match[2].strip() if match[2] else None
         commentary = match[3].strip() if match[3] else None
-        qa_commentary_list.append(
+        extracted_questions.append(
             (question, answer, secondary_answer, commentary))
-    return qa_commentary_list
+    return extracted_questions
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", help="directory with questions")
+    parser.add_argument("--limit", help="limit of files to process", default=1)
     args = parser.parse_args()
+    limit = args.limit
 
     r = redis.Redis(host="localhost", port=6379, db=0)
 
-    for filename in os.listdir(args.directory):
+    for filename in os.listdir(args.directory)[:limit]:
         file_path = os.path.join(args.directory, filename)
         with open(file_path, "r", encoding="koi8-r") as file:
-            content = file.read()
+            content = file.read().replace("\\n", "")
             questions = extract_questions(content)
 
             for item in questions:

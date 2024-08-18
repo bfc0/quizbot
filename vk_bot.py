@@ -4,7 +4,7 @@ from environs import Env
 import redis
 import logging
 
-from common import get_random_question
+from common import get_random_question, is_correct_answer_to
 
 
 class QuizStates(BaseStateGroup):
@@ -34,7 +34,7 @@ async def present_question(message: Message, context: dict):
     question = get_random_question(context["redis"])
     if not question:
         logging.error("no questions in database")
-        await message.answer(f"Вопросы закончились")
+        await message.answer("Вопросы закончились")
         return
 
     await message.answer(question["question"], keyboard=create_keyboard())
@@ -48,19 +48,14 @@ async def present_question(message: Message, context: dict):
 async def process_answer(message: Message, context: dict):
 
     question = message.state_peer.payload["payload"]  # type: ignore
-    primary, secondary = question["primary_answer"], question.get(
-        "secondary_answer")
-    explanation = question.get("explanation")
 
-    if message.text in (primary, secondary):
-        await message.answer(f"Правильно!", keyboard=create_keyboard())
+    if is_correct_answer_to(question, message.text):
+        await message.answer("Правильно!", keyboard=create_keyboard())
         await context["bot"].state_dispenser.set(
             message.peer_id, QuizStates.IDLE, payload={}
         )
     else:
-        await message.answer(
-            f"Неправильно. Попробуй еще.", keyboard=create_keyboard()
-        )
+        await message.answer("Неправильно. Попробуй еще.", keyboard=create_keyboard())
 
 
 async def give_up(message: Message, context: dict):
@@ -87,26 +82,34 @@ def main():
     env = Env()
     env.read_env()
 
+    loggers = [logging.getLogger(name)
+               for name in logging.root.manager.loggerDict]
+    for l in loggers:
+        l.setLevel(logging.ERROR)
+
     labeler = BotLabeler()
     bot = Bot(env.str("VK_TOKEN"), labeler=labeler)
-    ctx = {
+    context = {
         "redis": redis.Redis(host=env.str("REDIS_HOST", "redis")),
         "bot": bot,
     }
 
-    labeler.message(state=None)(lambda message: start(message, context=ctx))
+    labeler.message(state=None)(
+        lambda message: start(message, context=context)
+    )
     labeler.message(text="Новый вопрос")(
-        lambda message: present_question(message, context=ctx)
+        lambda message: present_question(message, context=context)
     )
     labeler.message(text="Сдаться", state=QuizStates.AWAITING_ANSWER)(
-        lambda message: give_up(message, context=ctx)
+        lambda message: give_up(message, context=context)
     )
     labeler.message(state=QuizStates.AWAITING_ANSWER)(
-        lambda message: process_answer(message, context=ctx)
+        lambda message: process_answer(message, context=context)
     )
     labeler.message(text="Мой счёт")(
-        lambda message: user_score(message, context=ctx))
-    labeler.message()(lambda message: any_message(message, context=ctx))
+        lambda message: user_score(message, context=context)
+    )
+    labeler.message()(lambda message: any_message(message, context=context))
 
     bot.run_forever()
 
