@@ -37,7 +37,7 @@ def main():
     for filename in os.listdir(args.directory)[:limit]:
         file_path = os.path.join(args.directory, filename)
         with open(file_path, "r", encoding="koi8-r") as file:
-            content = file.read().replace("\\n", "")
+            content = file.read().replace("\\n", "").replace("\n", "")
             questions = extract_questions(content)
 
             for item in questions:
