@@ -35,7 +35,7 @@ async def cmd_start(message: types.Message, state: FSMContext) -> None:
     await state.set_state(QuizStates.idle)
 
 
-@router.message(F.text.contains("Новый вопрос"))
+@router.message(F.text.contains("Новый вопрос"), QuizStates.idle)
 async def reply(message: types.Message, state: FSMContext, context: dict) -> None:
 
     question = get_random_question(context["redis"])
@@ -48,6 +48,11 @@ async def reply(message: types.Message, state: FSMContext, context: dict) -> Non
 
     await message.answer(question["question"])
     await state.set_state(QuizStates.awaiting_answer)
+
+
+@router.message(F.text.contains("Новый вопрос"), QuizStates.awaiting_answer)
+async def reply(message: types.Message, state: FSMContext, context: dict) -> None:
+    await message.answer("Сначала нажми Сдаться")
 
 
 @router.message(F.text.contains("Сдаться"), QuizStates.awaiting_answer)

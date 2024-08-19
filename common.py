@@ -8,7 +8,7 @@ def get_random_question(r: redis.Redis) -> dict | None:
         question = r.get(r.randomkey())
         return json.loads(question) if question else None
     except Exception as e:
-        logging.error(f"exception triggered while fetchig a question: {e}")
+        logging.error(f"exception triggered while fetching a question: {e}")
 
 
 def is_correct_answer_to(question: dict[str, str], answer: str) -> bool:
