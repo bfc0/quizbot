@@ -51,7 +51,7 @@ async def reply(message: types.Message, state: FSMContext, context: dict) -> Non
 
 
 @router.message(F.text.contains("Новый вопрос"), QuizStates.awaiting_answer)
-async def reply(message: types.Message, state: FSMContext, context: dict) -> None:
+async def reply_newquestion_wrongtime(message: types.Message, state: FSMContext, context: dict) -> None:
     await message.answer("Сначала нажми Сдаться")
 
 
