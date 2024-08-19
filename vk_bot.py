@@ -4,7 +4,7 @@ from environs import Env
 import redis
 import logging
 
-from common import get_random_question, is_correct_answer_to
+from quiz import get_random_question, is_correct_answer_to
 
 
 class QuizStates(BaseStateGroup):
